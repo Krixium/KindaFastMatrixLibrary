@@ -16,6 +16,8 @@ void test()
 		bData[i] = i + 1;
 	}
 
+	aData[0] = 0;
+
 	std::unique_ptr<kfml::KindaFastMatrix> A = std::make_unique<kfml::KindaFastMatrix>(aData, TEST_N, TEST_N);
 	std::unique_ptr<kfml::KindaFastMatrix> B = std::make_unique<kfml::KindaFastMatrix>(bData, TEST_N, TEST_N);
 	std::unique_ptr<kfml::KindaFastMatrix> I = std::make_unique<kfml::KindaFastMatrix>(TEST_N);
@@ -23,17 +25,9 @@ void test()
 	std::unique_ptr<kfml::KindaFastMatrix> C;
 	C.reset(A->CrossMultiply(B));
 
-	double det = A->GetDeterminant();
-
-	C->Print();
-	C->Scale(2);
-	C->Print();
-
 	A->Print();
-	A->SetVal(0, 0, 0);
-	A->Print();
-	A->Transpose();
-	A->Print();
+	kfml::KindaFastMatrix *AInverse = A->GetInverse();
+	AInverse->Print();
 
 	std::cin.get();
 }

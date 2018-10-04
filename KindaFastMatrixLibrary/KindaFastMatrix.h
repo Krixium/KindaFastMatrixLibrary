@@ -30,12 +30,13 @@ namespace kfml
 
 	public:
 		KindaFastMatrix(const size_t m);
+		KindaFastMatrix(const size_t m, const size_t n);
 		KindaFastMatrix(double *data, const size_t m, const size_t n);
 
 		KindaFastMatrix *CrossMultiply(const KindaFastMatrix& b) const;
 		KindaFastMatrix *CrossMultiply(const std::unique_ptr<KindaFastMatrix>& b) const;
 		void Scale(const double scalar);
-		const KindaFastMatrix *GetInverse();
+		KindaFastMatrix *GetInverse();
 		const double GetDeterminant();
 
 		inline void Transpose()
@@ -68,17 +69,25 @@ namespace kfml
 			{
 				for (size_t j = 0; j < N; j++)
 				{
-					std::cout << std::to_string((int)GetVal(i, j)) << "\t";
+					std::cout << std::to_string(GetVal(i, j)) << "\t";
 				}
 				std::cout << std::endl << std::endl;
 			}
 			std::cout << std::endl;
 		}
 
+		inline void ZeroOut()
+		{
+			for (size_t i = 0; i < M * N; i++)
+			{
+				mData[i] = 0;
+			}
+		}
+
 	private:
 		void calculateInverse();
-		static double calculateDet(const KindaFastMatrix *matrix, const size_t size);
-		static void extractCofactor(const KindaFastMatrix& matrix, KindaFastMatrix& tmp, const size_t x, const size_t y, const size_t n);
+		static double calculateDet(const KindaFastMatrix &matrix, const size_t size);
+		static void extractSubCofactor(const KindaFastMatrix& matrix, KindaFastMatrix& tmp, const size_t x, const size_t y, const size_t n);
 
 		// OpenCL helpers here
 	};
