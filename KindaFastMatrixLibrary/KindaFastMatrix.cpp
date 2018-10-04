@@ -104,26 +104,36 @@ double kfml::KindaFastMatrix::calculateDet(const kfml::KindaFastMatrix *matrix, 
 		size_t a = 0;
 		size_t b = 0;
 
-		for (size_t row = 0; row < matrix->M; row++)
-		{
-			for (size_t col = 0; col < matrix->M; col++)
-			{
-				if (row != 0 && col != i)
-				{
-					tmp.SetVal(matrix->GetVal(row, col), a, b++);
-					if (b == matrix->M - 1)
-					{
-						a = 0;
-						b++;
-					}
-				}
-			}
-		}
-
+		extractCofactor(*matrix, tmp, 0, i, size);
 		det += sign * matrix->GetVal(0, i) * calculateDet(&tmp, size - 1);
-		
 		sign = -sign;
 	}
 
 	return det;
+}
+
+void kfml::KindaFastMatrix::extractCofactor(const kfml::KindaFastMatrix& matrix, kfml::KindaFastMatrix& tmp, const size_t x, const size_t y, const size_t n)
+{
+	assert(matrix.M == matrix.N);
+	assert(x <= matrix.M - 1);
+	assert(y <= matrix.N - 1);
+	assert(n <= matrix.M && n <= matrix.N);
+	int i = 0;
+	int j = 0;
+
+	for (size_t row = 0; row < n; row++)
+	{
+		for (size_t col = 0; col < n; col++)
+		{
+			if (row != x && col != y)
+			{
+				tmp.SetVal(matrix.GetVal(row, col), i, j++);
+				if (j == matrix.M - 1)
+				{
+					j = 0;
+					i++;
+				}
+			}
+		}
+	}
 }

@@ -65,6 +65,7 @@ namespace kfml
 	private:
 		void calculateInverse();
 		static double calculateDet(const KindaFastMatrix *matrix, const size_t size);
+		static void extractCofactor(const KindaFastMatrix& matrix, KindaFastMatrix& tmp, const size_t x, const size_t y, const size_t n);
 
 		// OpenCL helpers here
 	};
