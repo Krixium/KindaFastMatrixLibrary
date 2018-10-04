@@ -38,6 +38,19 @@ namespace kfml
 		const KindaFastMatrix *GetInverse();
 		const double GetDeterminant();
 
+		inline void Transpose()
+		{
+			for (size_t i = 0; i < M; i++)
+			{
+				for (size_t j = i + 1; j < N; j++)
+				{
+					double tmp = GetVal(i, j);
+					SetVal(GetVal(j, i), i, j);
+					SetVal(tmp, j, i);
+				}
+			}
+		}
+
 		inline double GetVal(const size_t m, const size_t n) const
 		{
 			return mData[m * N + n];

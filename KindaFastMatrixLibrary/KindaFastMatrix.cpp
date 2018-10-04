@@ -27,6 +27,7 @@ kfml::KindaFastMatrix::KindaFastMatrix(double *data, const size_t m, const size_
 kfml::KindaFastMatrix *kfml::KindaFastMatrix::CrossMultiply(const KindaFastMatrix& b) const
 {
 	assert(this->N == b.M);
+
 	size_t K = N;
 
 	KindaFastMatrix *c = new KindaFastMatrix(new double[M * b.N], M, b.N);
@@ -60,12 +61,14 @@ void kfml::KindaFastMatrix::Scale(const double scalar)
 
 const kfml::KindaFastMatrix *kfml::KindaFastMatrix::GetInverse()
 {
-	if (mbDetCalculated)
+	if (!mbDetCalculated)
 	{
-		if (mDet == 0)
-		{
-			return nullptr;
-		}
+		GetDeterminant();
+	}
+
+	if (mDet == 0)
+	{
+		return nullptr;
 	}
 
 	if (mInverse == nullptr)
@@ -88,6 +91,7 @@ const double kfml::KindaFastMatrix::GetDeterminant()
 
 void kfml::KindaFastMatrix::calculateInverse()
 {
+
 }
 
 double kfml::KindaFastMatrix::calculateDet(const kfml::KindaFastMatrix *matrix, const size_t size)
@@ -118,6 +122,7 @@ void kfml::KindaFastMatrix::extractCofactor(const kfml::KindaFastMatrix& matrix,
 	assert(x <= matrix.M - 1);
 	assert(y <= matrix.N - 1);
 	assert(n <= matrix.M && n <= matrix.N);
+
 	int i = 0;
 	int j = 0;
 

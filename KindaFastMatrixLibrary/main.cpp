@@ -3,7 +3,7 @@
 
 #include "KindaFastMatrix.h"
 
-#define TEST_N 2
+#define TEST_N 3
 
 void test()
 {
@@ -28,6 +28,12 @@ void test()
 	C->Print();
 	C->Scale(2);
 	C->Print();
+
+	A->Print();
+	A->SetVal(0, 0, 0);
+	A->Print();
+	A->Transpose();
+	A->Print();
 
 	std::cin.get();
 }
