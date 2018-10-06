@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -8,7 +9,7 @@
 
 namespace kfml
 {
-	class KindaFastMatrix
+	class Matrix
 	{
 	public:
 		// Row
@@ -21,22 +22,23 @@ namespace kfml
 		bool mbDetCalculated; 
 
 		// Matrix data
-		std::unique_ptr<double[]> mData; 
+		std::unique_ptr<std::vector<double>> mData;
 
 		// Determinant
 		double mDet; 
 		// Inverse Matrix
-		std::unique_ptr<KindaFastMatrix> mInverse; 
+		std::unique_ptr<Matrix> mInverse; 
 
 	public:
-		KindaFastMatrix(const size_t m);
-		KindaFastMatrix(const size_t m, const size_t n);
-		KindaFastMatrix(double *data, const size_t m, const size_t n);
+		Matrix(const size_t m);
+		Matrix(const size_t m, const size_t n);
+		Matrix(double *data, const size_t m, const size_t n);
 
-		KindaFastMatrix *CrossMultiply(const KindaFastMatrix& b) const;
-		KindaFastMatrix *CrossMultiply(const std::unique_ptr<KindaFastMatrix>& b) const;
+		Matrix *CrossMultiply(const Matrix& b) const;
+		Matrix *CrossMultiply(const std::unique_ptr<Matrix>& b) const;
+		Matrix *CrossMultiply(const Matrix *b) const;
 		void Scale(const double scalar);
-		KindaFastMatrix *GetInverse();
+		Matrix *GetInverse();
 		const double GetDeterminant();
 
 		inline void Transpose()
@@ -54,13 +56,14 @@ namespace kfml
 
 		inline double GetVal(const size_t m, const size_t n) const
 		{
-			return mData[m * N + n];
+			return mData->at(m * N + n);
 		}
 
 		inline void SetVal(const double val, const size_t m, const size_t n)
 		{
-			mData[m * N + n] = val;
+			mData->at(m * N + n) = val;
 			mbDetCalculated = false;
+			mInverse.reset();
 		}
 
 		inline void Print()
@@ -76,20 +79,30 @@ namespace kfml
 			std::cout << std::endl;
 		}
 
+		inline void PrintLine()
+		{
+			std::cout << "[";
+			for (size_t i = 0; i < M * N - 1; i++)
+			{
+				std::cout << std::round(mData->at(i)) << ",";
+			}
+			std::cout << std::round(mData->at(M * N - 1)) << "]";
+			std::cout << std::endl;
+		}
+
 		inline void ZeroOut()
 		{
 			for (size_t i = 0; i < M * N; i++)
 			{
-				mData[i] = 0;
+				mData->at(i) = 0;
 			}
 		}
 
 	private:
 		void calculateInverse();
-		static double calculateDet(const KindaFastMatrix &matrix, const size_t size);
-		static void extractSubCofactor(const KindaFastMatrix& matrix, KindaFastMatrix& tmp, const size_t x, const size_t y, const size_t n);
+		static double calculateDet(const Matrix &matrix, const size_t size);
+		static void extractSubCofactor(const Matrix& matrix, Matrix& tmp, const size_t x, const size_t y, const size_t n);
 
 		// OpenCL helpers here
 	};
-
 }

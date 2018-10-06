@@ -1,40 +1,131 @@
+#include <algorithm>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <memory>
+#include <string>
+#include <sstream>
+#include <utility>
+#include <vector>
 
-#include "KindaFastMatrix.h"
+#include "Matrix.h"
 
-#define TEST_N 3
+const size_t lineLimit = 8096;
 
-void test()
+size_t parseMatrixSize(char *lineBuffer, const size_t limit)
 {
-	double *aData = new double[TEST_N * TEST_N];
-	double *bData = new double[TEST_N * TEST_N];
-
-	for (int i = 0; i < TEST_N * TEST_N; i++)
+	for (size_t i = 2; i < limit; i++)
 	{
-		aData[i] = i + 1;
-		bData[i] = i + 1;
+		if (lineBuffer[i] == 'x')
+		{
+			lineBuffer[i] = 0;
+			break;
+		}
 	}
 
-	aData[0] = 0;
+	return atoi(lineBuffer + 1);
+}
 
-	std::unique_ptr<kfml::KindaFastMatrix> A = std::make_unique<kfml::KindaFastMatrix>(aData, TEST_N, TEST_N);
-	std::unique_ptr<kfml::KindaFastMatrix> B = std::make_unique<kfml::KindaFastMatrix>(bData, TEST_N, TEST_N);
-	std::unique_ptr<kfml::KindaFastMatrix> I = std::make_unique<kfml::KindaFastMatrix>(TEST_N);
+void split(const std::string& str, std::vector<double>& cont, char delim = ' ')
+{
+	std::stringstream ss(str);
+	std::string token;
+	while (std::getline(ss, token, delim)) {
+		cont.push_back(stod(token));
+	}
+}
 
-	std::unique_ptr<kfml::KindaFastMatrix> C;
-	C.reset(A->CrossMultiply(B));
+std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *parseFile(const std::string& filename)
+{
+	std::ifstream dataFile(filename);
 
-	A->Print();
-	kfml::KindaFastMatrix *AInverse = A->GetInverse();
-	AInverse->Print();
+	if (!dataFile)
+	{
+		return nullptr;
+	}
 
-	std::cin.get();
+	std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *data = new std::vector<std::pair<kfml::Matrix, kfml::Matrix>>();
+
+	size_t matrixSize = 0;
+	char lineBuffer[lineLimit];
+
+	while (dataFile)
+	{
+		dataFile.getline(lineBuffer, lineLimit);
+
+		if (dataFile.eof())
+		{
+			continue;
+		}
+		if (lineBuffer[0] == '#')
+		{
+			matrixSize = parseMatrixSize(lineBuffer, lineLimit);
+		}
+		else
+		{
+			// Grab all the values of the matrix and put into a single vector
+			if (matrixSize == 0) continue;
+
+			std::vector<double> cont;
+			split(lineBuffer, cont, ',');
+
+			for (size_t i = 0; i < matrixSize - 1; i++)
+			{
+				dataFile.getline(lineBuffer, lineLimit);
+				split(lineBuffer, cont, ',');
+			}
+
+			// AX = B
+			double *A = new double[matrixSize * matrixSize];
+			double *B = new double[matrixSize];
+			size_t indexA = 0;
+			size_t indexB = 0;
+
+			// Split into A and B
+			for (size_t i = 0; i < cont.size(); i++)
+			{
+				if (i % (matrixSize + 1) == matrixSize) B[indexB++] = cont[i];
+				else A[indexA++] = cont[i];
+			}
+
+			data->push_back(std::pair<kfml::Matrix, kfml::Matrix>(kfml::Matrix(A, matrixSize, matrixSize), kfml::Matrix(B, matrixSize, 1)));
+			matrixSize = 0;
+		}
+	}
+
+	dataFile.close();
+	return data;
 }
 
 int main(int argc, char *argv[])
 {
-	test();
+	if (argc != 2)
+	{
+		std::cout << "Incorrect number of commandline arguements" << std::endl;
+		return 0;
+	}
 
+	std::unique_ptr<std::vector<std::pair<kfml::Matrix, kfml::Matrix>>> inputData;
+	inputData.reset(parseFile(argv[1]));
+
+	if (inputData == nullptr)
+	{
+		std::cout << "Could not read data in from file";
+		return 0;
+	}
+
+	for (size_t i = 0; i < inputData->size(); i++)
+	{
+		kfml::Matrix& A = inputData->at(i).first;
+		kfml::Matrix& B = inputData->at(i).second;
+
+		std::unique_ptr<kfml::Matrix> C;
+		C.reset(A.GetInverse()->CrossMultiply(B));
+
+		C->PrintLine();
+	}
+
+	//std::cout << "Press any key to exit" << std::endl;
+	//std::cin.get();
 	return 0;
 }

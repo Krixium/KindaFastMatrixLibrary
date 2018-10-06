@@ -1,56 +1,49 @@
-#include "KindaFastMatrix.h"
+#include "Matrix.h"
 
-kfml::KindaFastMatrix::KindaFastMatrix(const size_t m)
+kfml::Matrix::Matrix(const size_t m)
 	: M(m)
 	, N(m)
+	, mData(std::make_unique<std::vector<double>>(m * m))
+	, mInverse(nullptr)
+	, mDet(0)
 	, mbDetCalculated(false)
 {
-	mInverse.reset();
-	mData.reset(new double[m * m]);
-
 	for (size_t i = 0; i < m; i++)
-	{
-		for (size_t j = 0; j < m; j++)
-		{
-			if (i == j) SetVal(1, i, j);
-			else SetVal(0, i, j);
-		}
-	}
+		SetVal(1, i, i);
 }
 
-kfml::KindaFastMatrix::KindaFastMatrix(const size_t m, const size_t n)
+kfml::Matrix::Matrix(const size_t m, const size_t n)
 	: M(m)
 	, N(n)
+	, mData(std::make_unique<std::vector<double>>(m * n))
+	, mInverse(nullptr)
+	, mDet(0)
 	, mbDetCalculated(false)
 {
-	mInverse.reset();
-	mData.reset(new double[m * n]);
-
 	for (size_t i = 0; i < m; i++)
-	{
-		for (size_t j = 0; j < m; j++)
-		{
-			if (i == j) SetVal(1, i, j);
-			else SetVal(0, i, j);
-		}
-	}
+		for (size_t j = 0; j < n; j++)
+			SetVal(1, i, j);
 }
 
-kfml::KindaFastMatrix::KindaFastMatrix(double *data, const size_t m, const size_t n)
+kfml::Matrix::Matrix(double *data, const size_t m, const size_t n)
 	: N(n)
 	, M(m)
-	, mData(data)
+	, mData(std::make_unique<std::vector<double>>())
 	, mInverse(nullptr)
+	, mDet(0)
+	, mbDetCalculated(false)
 {
+	for (size_t i = 0; i < m * n; i++)
+		mData->push_back(data[i]);
 }
 
-kfml::KindaFastMatrix *kfml::KindaFastMatrix::CrossMultiply(const KindaFastMatrix& b) const
+kfml::Matrix *kfml::Matrix::CrossMultiply(const Matrix& b) const
 {
-	assert(this->N == b.M);
+	assert(N == b.M);
 
 	size_t K = N;
 
-	KindaFastMatrix *c = new KindaFastMatrix(new double[M * b.N], M, b.N);
+	Matrix *c = new Matrix(new double[M * b.N], M, b.N);
 
 	for (size_t i = 0; i < M; i++)
 	{
@@ -68,18 +61,23 @@ kfml::KindaFastMatrix *kfml::KindaFastMatrix::CrossMultiply(const KindaFastMatri
 	return c;
 }
 
-kfml::KindaFastMatrix *kfml::KindaFastMatrix::CrossMultiply(const std::unique_ptr<KindaFastMatrix>& b) const
+kfml::Matrix *kfml::Matrix::CrossMultiply(const std::unique_ptr<Matrix>& b) const
 {
 	return CrossMultiply(*b);
 }
 
-void kfml::KindaFastMatrix::Scale(const double scalar)
+kfml::Matrix *kfml::Matrix::CrossMultiply(const kfml::Matrix *b) const
 {
-	for (size_t i = 0; i < M * N; i++)
-		mData[i] *= scalar;
+	return CrossMultiply(*b);
 }
 
-kfml::KindaFastMatrix *kfml::KindaFastMatrix::GetInverse()
+void kfml::Matrix::Scale(const double scalar)
+{
+	for (size_t i = 0; i < M * N; i++)
+		mData->at(i) *= scalar;
+}
+
+kfml::Matrix *kfml::Matrix::GetInverse()
 {
 	if (!mbDetCalculated)
 	{
@@ -99,47 +97,49 @@ kfml::KindaFastMatrix *kfml::KindaFastMatrix::GetInverse()
 	return mInverse.get();
 }
 
-const double kfml::KindaFastMatrix::GetDeterminant()
+const double kfml::Matrix::GetDeterminant()
 {
 	if (!mbDetCalculated)
 	{
 		mDet = calculateDet(*this, M);
+		mbDetCalculated = true;
 	}
 
 	return mDet;
 }
 
-void kfml::KindaFastMatrix::calculateInverse()
+void kfml::Matrix::calculateInverse()
 {
 	assert(M == N);
 
-	mInverse = std::make_unique<kfml::KindaFastMatrix>(M, N);
+	mInverse = std::make_unique<kfml::Matrix>(M, N);
 
-	kfml::KindaFastMatrix tmp(M, N);
+	kfml::Matrix tmp(M - 1, N - 1);
 
-	int sign = 1;
+	double inverseDet = 1 / GetDeterminant();
+	int sign;
 
 	for (size_t i = 0; i < M; i++)
 	{
 		for (size_t j = 0; j < N; j++)
 		{
+			(i + j + 2) % 2 == 0 ? sign = 1 : sign = -1;
 			extractSubCofactor(*this, tmp, i, j, M);
-			mInverse->SetVal((1 / GetDeterminant()) * sign * tmp.GetDeterminant(), i, j);
-			sign = -sign;
+			mInverse->SetVal(inverseDet * sign * tmp.GetDeterminant(), i, j);
 		}
 	}
 
 	mInverse->Transpose();
 }
 
-double kfml::KindaFastMatrix::calculateDet(const kfml::KindaFastMatrix &matrix, const size_t size)
+double kfml::Matrix::calculateDet(const kfml::Matrix &matrix, const size_t size)
 {
 	double det = 0;
 	
 	if (matrix.M == 1) return matrix.GetVal(0, 0);
 
 	int sign = 1;
-	kfml::KindaFastMatrix tmp(size);
+	kfml::Matrix tmp(size - 1);
 	
 	for (size_t i = 0; i < size; i++)
 	{
@@ -151,7 +151,7 @@ double kfml::KindaFastMatrix::calculateDet(const kfml::KindaFastMatrix &matrix, 
 	return det;
 }
 
-void kfml::KindaFastMatrix::extractSubCofactor(const kfml::KindaFastMatrix& matrix, kfml::KindaFastMatrix& tmp, const size_t x, const size_t y, const size_t n)
+void kfml::Matrix::extractSubCofactor(const kfml::Matrix& matrix, kfml::Matrix& tmp, const size_t x, const size_t y, const size_t n)
 {
 	assert(matrix.M == matrix.N);
 	assert(x <= matrix.M - 1);
