@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <chrono>
+#include <functional>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -12,6 +14,18 @@
 
 const size_t lineLimit = 8096;
 
+// Time things in seconds 
+double TimeExecution(std::function<void()> callback)
+{
+	std::chrono::time_point<std::chrono::steady_clock> mStartTime = std::chrono::high_resolution_clock::now();
+	callback();
+	std::chrono::time_point<std::chrono::steady_clock> mEndTime = std::chrono::high_resolution_clock::now();
+
+	std::chrono::duration<double> delta = mEndTime - mStartTime;
+	return delta.count();
+}
+
+// Extracts the size of the matrix from the file
 size_t parseMatrixSize(char *lineBuffer, const size_t limit)
 {
 	for (size_t i = 2; i < limit; i++)
@@ -26,6 +40,7 @@ size_t parseMatrixSize(char *lineBuffer, const size_t limit)
 	return atoi(lineBuffer + 1);
 }
 
+// Splits a string
 void split(const std::string& str, std::vector<double>& cont, char delim = ' ')
 {
 	std::stringstream ss(str);
@@ -35,6 +50,7 @@ void split(const std::string& str, std::vector<double>& cont, char delim = ' ')
 	}
 }
 
+// Parses the file into pairs of matrix A and matrix B and shoves it all into a vector
 std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *parseFile(const std::string& filename)
 {
 	std::ifstream dataFile(filename);
@@ -105,8 +121,13 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	double time;
 	std::unique_ptr<std::vector<std::pair<kfml::Matrix, kfml::Matrix>>> inputData;
-	inputData.reset(parseFile(argv[1]));
+
+	time = TimeExecution([&]() {
+		inputData.reset(parseFile(argv[1]));
+	});
+	std::cout << "Reading the file took: " << time << "s" << std::endl;
 
 	if (inputData == nullptr)
 	{
@@ -119,8 +140,17 @@ int main(int argc, char *argv[])
 		kfml::Matrix& A = inputData->at(i).first;
 		kfml::Matrix& B = inputData->at(i).second;
 
+		time = TimeExecution([&]() {
+			A.GetInverse();
+		});
+		std::cout << "Calculating inverse took: " << time << "s" << std::endl;
+
 		std::unique_ptr<kfml::Matrix> C;
-		C.reset(A.GetInverse()->CrossMultiply(B));
+
+		time = TimeExecution([&]() {
+			C.reset(A.GetInverse()->CrossMultiply(B));
+		});
+		std::cout << "Solving the system of equations took: " << time << "s" << std::endl;
 
 		C->PrintLine();
 	}

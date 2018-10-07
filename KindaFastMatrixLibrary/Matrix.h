@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -27,16 +28,16 @@ namespace kfml
 		// Determinant
 		double mDet; 
 		// Inverse Matrix
-		std::unique_ptr<Matrix> mInverse; 
+		std::unique_ptr<Matrix> mInverse;
 
 	public:
 		Matrix(const size_t m);
 		Matrix(const size_t m, const size_t n);
 		Matrix(double *data, const size_t m, const size_t n);
 
-		Matrix *CrossMultiply(const Matrix& b) const;
-		Matrix *CrossMultiply(const std::unique_ptr<Matrix>& b) const;
-		Matrix *CrossMultiply(const Matrix *b) const;
+		Matrix *CrossMultiply(const Matrix& b);
+		inline Matrix *CrossMultiply(const std::unique_ptr<Matrix>& b) { return CrossMultiply(*b); }
+		inline Matrix *CrossMultiply(const Matrix *b) { return CrossMultiply(*b); }
 		void Scale(const double scalar);
 		Matrix *GetInverse();
 		const double GetDeterminant();
@@ -54,10 +55,7 @@ namespace kfml
 			}
 		}
 
-		inline double GetVal(const size_t m, const size_t n) const
-		{
-			return mData->at(m * N + n);
-		}
+		inline double GetVal(const size_t m, const size_t n) const { return mData->at(m * N + n); }
 
 		inline void SetVal(const double val, const size_t m, const size_t n)
 		{
@@ -90,19 +88,11 @@ namespace kfml
 			std::cout << std::endl;
 		}
 
-		inline void ZeroOut()
-		{
-			for (size_t i = 0; i < M * N; i++)
-			{
-				mData->at(i) = 0;
-			}
-		}
+		inline void ZeroOut() { for (size_t i = 0; i < M * N; i++) mData->at(i) = 0; }
 
 	private:
 		void calculateInverse();
 		static double calculateDet(const Matrix &matrix, const size_t size);
-		static void extractSubCofactor(const Matrix& matrix, Matrix& tmp, const size_t x, const size_t y, const size_t n);
-
-		// OpenCL helpers here
+		static void extractMinor(const Matrix& matrix, Matrix& tmp, const size_t x, const size_t y, const size_t n);
 	};
 }

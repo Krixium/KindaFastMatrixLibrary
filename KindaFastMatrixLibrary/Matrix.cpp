@@ -37,7 +37,7 @@ kfml::Matrix::Matrix(double *data, const size_t m, const size_t n)
 		mData->push_back(data[i]);
 }
 
-kfml::Matrix *kfml::Matrix::CrossMultiply(const Matrix& b) const
+kfml::Matrix *kfml::Matrix::CrossMultiply(const Matrix& b)
 {
 	assert(N == b.M);
 
@@ -57,18 +57,8 @@ kfml::Matrix *kfml::Matrix::CrossMultiply(const Matrix& b) const
 			c->SetVal(sum, i, j);
 		}
 	}
-	
+
 	return c;
-}
-
-kfml::Matrix *kfml::Matrix::CrossMultiply(const std::unique_ptr<Matrix>& b) const
-{
-	return CrossMultiply(*b);
-}
-
-kfml::Matrix *kfml::Matrix::CrossMultiply(const kfml::Matrix *b) const
-{
-	return CrossMultiply(*b);
 }
 
 void kfml::Matrix::Scale(const double scalar)
@@ -124,7 +114,7 @@ void kfml::Matrix::calculateInverse()
 		for (size_t j = 0; j < N; j++)
 		{
 			(i + j + 2) % 2 == 0 ? sign = 1 : sign = -1;
-			extractSubCofactor(*this, tmp, i, j, M);
+			extractMinor(*this, tmp, i, j, M);
 			mInverse->SetVal(inverseDet * sign * tmp.GetDeterminant(), i, j);
 		}
 	}
@@ -143,7 +133,7 @@ double kfml::Matrix::calculateDet(const kfml::Matrix &matrix, const size_t size)
 	
 	for (size_t i = 0; i < size; i++)
 	{
-		extractSubCofactor(matrix, tmp, 0, i, size);
+		extractMinor(matrix, tmp, 0, i, size);
 		det += sign * matrix.GetVal(0, i) * calculateDet(tmp, size - 1);
 		sign = -sign;
 	}
@@ -151,7 +141,7 @@ double kfml::Matrix::calculateDet(const kfml::Matrix &matrix, const size_t size)
 	return det;
 }
 
-void kfml::Matrix::extractSubCofactor(const kfml::Matrix& matrix, kfml::Matrix& tmp, const size_t x, const size_t y, const size_t n)
+void kfml::Matrix::extractMinor(const kfml::Matrix& matrix, kfml::Matrix& tmp, const size_t x, const size_t y, const size_t n)
 {
 	assert(matrix.M == matrix.N);
 	assert(x <= matrix.M - 1);
