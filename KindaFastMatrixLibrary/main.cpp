@@ -12,7 +12,7 @@
 
 #include "Matrix.h"
 
-const size_t lineLimit = 8096;
+const size_t LINE_LIMIT = 8096;
 
 // Time things in seconds 
 double TimeExecution(std::function<void()> callback)
@@ -63,11 +63,11 @@ std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *parseFile(const std::string&
 	std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *data = new std::vector<std::pair<kfml::Matrix, kfml::Matrix>>();
 
 	size_t matrixSize = 0;
-	char lineBuffer[lineLimit];
+	char lineBuffer[LINE_LIMIT];
 
 	while (dataFile)
 	{
-		dataFile.getline(lineBuffer, lineLimit);
+		dataFile.getline(lineBuffer, LINE_LIMIT);
 
 		if (dataFile.eof())
 		{
@@ -75,7 +75,7 @@ std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *parseFile(const std::string&
 		}
 		if (lineBuffer[0] == '#')
 		{
-			matrixSize = parseMatrixSize(lineBuffer, lineLimit);
+			matrixSize = parseMatrixSize(lineBuffer, LINE_LIMIT);
 		}
 		else
 		{
@@ -87,7 +87,7 @@ std::vector<std::pair<kfml::Matrix, kfml::Matrix>> *parseFile(const std::string&
 
 			for (size_t i = 0; i < matrixSize - 1; i++)
 			{
-				dataFile.getline(lineBuffer, lineLimit);
+				dataFile.getline(lineBuffer, LINE_LIMIT);
 				split(lineBuffer, cont, ',');
 			}
 
